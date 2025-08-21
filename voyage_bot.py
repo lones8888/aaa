@@ -3,8 +3,8 @@ import re
 from bs4 import BeautifulSoup
 import os
 
-BOT_TOKEN = os.getenv("BOT_TOKEN", "BOT_TOKENINIZI_GIRIN")
-CHAT_ID = os.getenv("CHAT_ID", "CHAT_IDINIZI_GIRIN")
+BOT_TOKEN = os.getenv("BOT_TOKEN", "8064693875:AAFEHpkHFMTnqPno2gZB19FHAbyCMVtmWGQ")
+CHAT_ID = os.getenv("CHAT_ID", "-1002950043362")
 
 URL = "https://www.etstur.com/Voyage-Sorgun?check_in=06.09.2026&check_out=11.09.2026&adult_1=2&child_1=0"
 
