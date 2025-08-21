@@ -17,17 +17,25 @@ PAYLOAD = {
     }
 }
 
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                  "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "application/json, text/plain, */*",
+    "Content-Type": "application/json;charset=UTF-8",
+    "Origin": "https://www.etstur.com",
+    "Referer": "https://www.etstur.com/",
+}
+
 def get_price():
-    headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.post(API_URL, json=PAYLOAD, headers=headers)
+    response = requests.post(API_URL, json=PAYLOAD, headers=HEADERS)
 
     if response.status_code != 200:
         return None, None, f"API hatası: {response.status_code}"
 
     data = response.json()
 
-    # API'den gelen ana veri "data" key'i içinde olabilir
-    items = data.get("data", data)  
+    # Bazı durumlarda "data" anahtarında olabilir
+    items = data.get("data", data)
 
     if isinstance(items, list):
         for item in items:
@@ -58,6 +66,5 @@ if __name__ == "__main__":
             f"Normal Fiyat: {normal_str}"
         )
 
-    print(msg)  # debug için konsola yaz
+    print(msg)  # GitHub Actions log için
     send_telegram_message(msg)
-
