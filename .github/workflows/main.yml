@@ -1,0 +1,37 @@
+name: Voyage Sorgun Screenshot Bot
+
+on:
+  workflow_dispatch:  # Manuel çalıştırmak için (GitHub Actions > Run workflow)
+  schedule:
+    - cron: "0 6 * * *"  # Her gün saat 06:00'da çalışır (UTC)
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repo Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install selenium requests
+
+      - name: Install Google Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Install ChromeDriver
+        run: |
+          sudo apt-get install -y chromium-chromedriver
+          sudo ln -s /usr/lib/chromium-browser/chromedriver /usr/local/bin/chromedriver || true
+          sudo ln -s /usr/lib/chromium/chromedriver /usr/local/bin/chromedriver || true
+
+      - name: Run bot
+        run: python voyage.py
