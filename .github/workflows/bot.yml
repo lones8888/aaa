@@ -22,6 +22,6 @@ jobs:
 
       - name: Botu çalıştır
         run: |
-          BOT_TOKEN="8324536648:AAFC8agg61eSyR4UO0UoRvMq1aGVn3c20j0" \
+          BOT_TOKEN="8064693875:AAFEHpkHFMTnqPno2gZB19FHAbyCMVtmWGQ" \
           CHAT_ID="-1002950043362" \
           python voyage_bot.py
