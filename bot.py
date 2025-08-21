@@ -27,15 +27,14 @@ def get_prices():
 
     data = response.json()
 
-    # DEBUG JSON dosyaya kaydet
-    with open("debug.json", "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
-
-    print("✅ debug.json dosyasına yazıldı, lütfen açıp ilk 30 satırını paylaş")
+    # DEBUG: JSON’un ilk kısmını konsola bas
+    debug_str = json.dumps(data, indent=2, ensure_ascii=False)[:500]
+    print("DEBUG JSON ÇIKTISI:\n", debug_str)
 
     discounted = None
     normal = None
 
+    # JSON içinde "data" varsa ona gir
     items = data.get("data", data)
 
     if isinstance(items, list):
@@ -51,26 +50,24 @@ def get_prices():
             discounted = room_price.get("discountedPrice")
             normal = room_price.get("amount")
 
-    return discounted, normal, None
+    return discounted, normal, debug_str
 
 def send_telegram_message(message):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
     payload = {"chat_id": CHAT_ID, "text": message}
-    r = requests.post(url, data=payload)
-    print("Telegram status:", r.status_code, r.text)
+    requests.post(url, data=payload)
 
 if __name__ == "__main__":
-    discounted, normal, err = get_prices()
+    discounted, normal, debug = get_prices()
 
-    if err:
-        msg = f"Voyage Sorgun Güncel Fiyatlar:\nHata: {err}"
-    else:
-        discounted_str = f"{discounted:,.0f} TL" if discounted else "İndirimli fiyat bulunamadı"
-        normal_str = f"{normal:,.0f} TL" if normal else "Fiyat bulunamadı"
-        msg = (
-            "Voyage Sorgun Güncel Fiyatlar:\n"
-            f"İndirimli Fiyat: {discounted_str}\n"
-            f"Normal Fiyat: {normal_str}"
-        )
+    discounted_str = f"{discounted:,.0f} TL" if discounted else "İndirimli fiyat bulunamadı"
+    normal_str = f"{normal:,.0f} TL" if normal else "Fiyat bulunamadı"
+
+    msg = (
+        "Voyage Sorgun Güncel Fiyatlar:\n"
+        f"İndirimli Fiyat: {discounted_str}\n"
+        f"Normal Fiyat: {normal_str}\n\n"
+        f"DEBUG JSON:\n{debug}"
+    )
 
     send_telegram_message(msg)
