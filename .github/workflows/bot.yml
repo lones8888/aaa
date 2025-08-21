@@ -2,7 +2,7 @@ name: Voyage Sorgun Bot
 
 on:
   schedule:
-    - cron: "0 7 * * *"  # Her gün sabah 07:00 UTC (Türkiye saati 19:05)
+    - cron: "0 7 * * *"  # Her gün sabah 07:00 UTC (Türkiye saati 10:00)
   workflow_dispatch:      # Elle çalıştırabilmek için
 
 jobs:
@@ -21,7 +21,7 @@ jobs:
         run: pip install requests beautifulsoup4
 
       - name: Botu çalıştır
-        env:
-          BOT_TOKEN: ${{ 8064693875:AAFEHpkHFMTnqPno2gZB19FHAbyCMVtmWGQ }}
-          CHAT_ID: ${{ -1002950043362 }}
-        run: python voyage_bot.py
+        run: |
+          BOT_TOKEN="8324536648:AAFC8agg61eSyR4UO0UoRvMq1aGVn3c20j0" \
+          CHAT_ID="-1002950043362" \
+          python voyage_bot.py
