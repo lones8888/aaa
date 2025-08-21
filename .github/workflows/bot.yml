@@ -2,7 +2,7 @@ name: Voyage Sorgun Bot
 
 on:
   schedule:
-    - cron: "0 7 * * *"  # Her gün sabah 07:00 UTC (Türkiye saati 10:00)
+    - cron: "0 7 * * *"  # Her gün sabah 07:00 UTC (Türkiye saati 19:05)
   workflow_dispatch:      # Elle çalıştırabilmek için
 
 jobs:
