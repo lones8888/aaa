@@ -34,4 +34,4 @@ jobs:
           sudo ln -s /usr/lib/chromium/chromedriver /usr/local/bin/chromedriver || true
 
       - name: Run bot
-        run: python aaa/voyage.py
+  run: python aaa/voyage.py
