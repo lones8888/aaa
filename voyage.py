@@ -1,26 +1,28 @@
-from playwright.sync_api import sync_playwright
 import requests
+from bs4 import BeautifulSoup
 
 BOT_TOKEN = "8064693875:AAFEHpkHFMTnqPno2gZB19FHAbyCMVtmWGQ"
 CHAT_ID = "-1002950043362"
+URL = "https://www.etstur.com/Voyage-Sorgun"
 
-def send_message(text):
+def send_telegram(message):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    requests.post(url, data={"chat_id": CHAT_ID, "text": text})
+    payload = {"chat_id": CHAT_ID, "text": message[:4000]}  # Telegram limit 4096
+    requests.post(url, data=payload)
 
-with sync_playwright() as p:
-    browser = p.chromium.launch(headless=True)
-    page = browser.new_page()
-    page.goto("https://www.etstur.com/Voyage-Sorgun", timeout=60000)
+def main():
+    # Sayfa kaynağını al
+    resp = requests.get(URL, headers={"User-Agent": "Mozilla/5.0"})
+    resp.raise_for_status()
 
-    # Sayfa tamamen yüklenmesi için biraz bekletelim
-    page.wait_for_timeout(5000)
+    # HTML parse et
+    soup = BeautifulSoup(resp.text, "html.parser")
 
-    # Body içindeki tüm yazıları al
-    all_text = page.inner_text("body")
-    browser.close()
+    # Tüm yazıları topla
+    text = soup.get_text(separator="\n", strip=True)
 
-# Telegram karakter limitine göre parçalayarak gönder
-chunk_size = 4000
-for i in range(0, len(all_text), chunk_size):
-    send_message(all_text[i:i+chunk_size])
+    # Telegram’a gönder
+    send_telegram("Voyage Sorgun Sayfa İçeriği:\n\n" + text)
+
+if __name__ == "__main__":
+    main()
