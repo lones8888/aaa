@@ -12,10 +12,16 @@ def get_price():
     response = requests.get(URL, headers=headers)
 
     soup = BeautifulSoup(response.text, "html.parser")
-    price_tag = soup.find("p", {"data-test-id": "price"})  # data-test-id ile bul
-    if price_tag:
-        return price_tag.get_text(strip=True)
-    return "Fiyat bulunamadı"
+    
+    # İndirimli fiyatı al
+    discounted_price_tag = soup.find("p", {"data-test-id": "discountedPrice"})
+    discounted_price = discounted_price_tag.get_text(strip=True) if discounted_price_tag else "İndirimli fiyat bulunamadı"
+    
+    # Normal fiyatı al
+    price_tag = soup.find("p", {"data-test-id": "price"})
+    price = price_tag.get_text(strip=True) if price_tag else "Fiyat bulunamadı"
+
+    return f"İndirimli Fiyat: {discounted_price}, Normal Fiyat: {price}"
 
 def send_telegram_message(message):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
@@ -24,4 +30,4 @@ def send_telegram_message(message):
 
 if __name__ == "__main__":
     price = get_price()
-    send_telegram_message(f"Voyage Sorgun Güncel Fiyat: {price}")
+    send_telegram_message(f"Voyage Sorgun Güncel Fiyatlar: {price}")
