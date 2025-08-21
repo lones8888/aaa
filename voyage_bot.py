@@ -1,4 +1,5 @@
 import requests
+import json
 
 BOT_TOKEN = "8064693875:AAFEHpkHFMTnqPno2gZB19FHAbyCMVtmWGQ"
 CHAT_ID = "-1002950043362"
@@ -17,27 +18,39 @@ PAYLOAD = {
     }
 }
 
-def get_price():
+def get_prices():
     headers = {"User-Agent": "Mozilla/5.0"}
     response = requests.post(API_URL, json=PAYLOAD, headers=headers)
 
-    if response.status_code == 200:
-        data = response.json()
+    if response.status_code != 200:
+        return None, None, f"API hatası: {response.status_code}"
 
-        # JSON içinden "Genel Görünüm" olanı seç
-        if isinstance(data, list):  # API liste döndürüyor olabilir
-            for item in data:
-                if item.get("roomName") == "Genel Görünüm":
-                    price = item["roomPrice"]["discountedPrice"]
-                    return f"{price:,.0f} TL"
-        elif isinstance(data, dict):  # Tek obje dönebilir
-            if data.get("roomName") == "Genel Görünüm":
-                price = data["roomPrice"]["discountedPrice"]
-                return f"{price:,.0f} TL"
+    data = response.json()
 
-        return "Genel Görünüm için fiyat bulunamadı"
-    else:
-        return f"API hatası: {response.status_code}"
+    # DEBUG: JSON’un ilk kısmını konsola bas
+    debug_str = json.dumps(data, indent=2, ensure_ascii=False)[:500]
+    print("DEBUG JSON ÇIKTISI:\n", debug_str)
+
+    discounted = None
+    normal = None
+
+    # JSON içinde "data" varsa ona gir
+    items = data.get("data", data)
+
+    if isinstance(items, list):
+        for item in items:
+            if item.get("roomName") == "Genel Görünüm":
+                room_price = item.get("roomPrice", {})
+                discounted = room_price.get("discountedPrice")
+                normal = room_price.get("amount")
+                break
+    elif isinstance(items, dict):
+        if items.get("roomName") == "Genel Görünüm":
+            room_price = items.get("roomPrice", {})
+            discounted = room_price.get("discountedPrice")
+            normal = room_price.get("amount")
+
+    return discounted, normal, debug_str
 
 def send_telegram_message(message):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
@@ -45,5 +58,16 @@ def send_telegram_message(message):
     requests.post(url, data=payload)
 
 if __name__ == "__main__":
-    price = get_price()
-    send_telegram_message(f"Voyage Sorgun (Genel Görünüm) Güncel Fiyat: {price}")
+    discounted, normal, debug = get_prices()
+
+    discounted_str = f"{discounted:,.0f} TL" if discounted else "İndirimli fiyat bulunamadı"
+    normal_str = f"{normal:,.0f} TL" if normal else "Fiyat bulunamadı"
+
+    msg = (
+        "Voyage Sorgun Güncel Fiyatlar:\n"
+        f"İndirimli Fiyat: {discounted_str}\n"
+        f"Normal Fiyat: {normal_str}\n\n"
+        f"DEBUG JSON:\n{debug}"
+    )
+
+    send_telegram_message(msg)
