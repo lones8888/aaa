@@ -1,4 +1,4 @@
-name: Voyage Sorgun Screenshot Bot
+run: python aaa/voyage.pyname: Voyage Sorgun Screenshot Bot
 
 on:
   workflow_dispatch:  # Manuel çalıştırmak için (GitHub Actions > Run workflow)
@@ -34,4 +34,4 @@ jobs:
           sudo ln -s /usr/lib/chromium/chromedriver /usr/local/bin/chromedriver || true
 
       - name: Run bot
-        run: python voyage.py
+        run: python aaa/voyage.py
