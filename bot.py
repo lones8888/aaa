@@ -21,23 +21,23 @@ def get_price():
     headers = {"User-Agent": "Mozilla/5.0"}
     response = requests.post(API_URL, json=PAYLOAD, headers=headers)
 
-    if response.status_code == 200:
-        data = response.json()
+    if response.status_code != 200:
+        return None, None, f"API hatası: {response.status_code}"
 
-        # JSON içinden "Genel Görünüm" olanı seç
-        if isinstance(data, list):  # API liste döndürüyor olabilir
-            for item in data:
-                if item.get("roomName") == "Ana Havuz Genel Görünüm":
-                    price = item["roomPrice"]["discountedPrice"]
-                    return f"{price:,.0f} TL"
-        elif isinstance(data, dict):  # Tek obje dönebilir
-            if data.get("roomName") == "Genel Görünüm":
-                price = data["roomPrice"]["discountedPrice"]
-                return f"{price:,.0f} TL"
+    data = response.json()
 
-        return "Genel Görünüm için fiyat bulunamadı"
-    else:
-        return f"API hatası: {response.status_code}"
+    # API'den gelen ana veri "data" key'i içinde olabilir
+    items = data.get("data", data)  
+
+    if isinstance(items, list):
+        for item in items:
+            if item.get("roomName") == "Genel Görünüm":
+                rp = item.get("roomPrice", {})
+                discounted = rp.get("discountedPrice")
+                normal = rp.get("amount")
+                return discounted, normal, None
+
+    return None, None, "Genel Görünüm için fiyat bulunamadı"
 
 def send_telegram_message(message):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
@@ -45,5 +45,19 @@ def send_telegram_message(message):
     requests.post(url, data=payload)
 
 if __name__ == "__main__":
-    price = get_price()
-    send_telegram_message(f"Voyage Sorgun (Genel Görünüm) Güncel Fiyat: {price}")
+    discounted, normal, error = get_price()
+
+    if error:
+        msg = f"Voyage Sorgun (Genel Görünüm) Güncel Fiyat: {error}"
+    else:
+        discounted_str = f"{discounted:,.0f} TL" if discounted else "İndirimli fiyat bulunamadı"
+        normal_str = f"{normal:,.0f} TL" if normal else "Fiyat bulunamadı"
+        msg = (
+            "Voyage Sorgun (Genel Görünüm) Güncel Fiyatlar:\n"
+            f"İndirimli Fiyat: {discounted_str}\n"
+            f"Normal Fiyat: {normal_str}"
+        )
+
+    print(msg)  # debug için konsola yaz
+    send_telegram_message(msg)
+
