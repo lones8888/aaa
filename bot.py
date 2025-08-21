@@ -30,7 +30,7 @@ def get_prices():
         # Eğer liste dönüyorsa
         if isinstance(data, list):
             for item in data:
-                if item.get("roomName") == "Genel Görünüm":
+                if item.get("roomName") == "Ana Havuz Genel Görünüm":
                     room_price = item.get("roomPrice", {})
                     discounted = room_price.get("discountedPrice")
                     normal = room_price.get("amount")
