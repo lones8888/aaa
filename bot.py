@@ -1,41 +1,47 @@
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 import time
 import requests
-import re
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 
+# --- Telegram bilgileri (gizli değil, direkt kod içinde) ---
 BOT_TOKEN = "8064693875:AAFEHpkHFMTnqPno2gZB19FHAbyCMVtmWGQ"
 CHAT_ID = "-1002950043362"
+# ----------------------------------------------------------
 
-URL = "https://www.etstur.com/Voyage-Sorgun?check_in=2026-09-06&check_out=2026-09-11&adult_1=2&child_1=0"
+def send_photo_to_telegram(photo_path, caption="Voyage Sorgun Güncel Görünüm"):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto"
+    with open(photo_path, "rb") as photo:
+        response = requests.post(
+            url,
+            data={"chat_id": CHAT_ID, "caption": caption},
+            files={"photo": photo},
+        )
+    print("Telegram yanıtı:", response.text)
 
-def get_price():
-    options = Options()
-    options.add_argument("--headless=new")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-gpu")
+def main():
+    chrome_options = Options()
+    chrome_options.add_argument("--headless=new")  
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_argument("--window-size=1280,1024")
 
-    driver = webdriver.Chrome(options=options)
-    driver.get(URL)
-    time.sleep(5)  # sayfanın yüklenmesini bekle
+    driver = webdriver.Chrome(service=Service("/usr/local/bin/chromedriver"), options=chrome_options)
 
-    html = driver.page_source
-    driver.quit()
+    try:
+        url = "https://www.etstur.com/Voyage-Sorgun"  
+        driver.get(url)
+        time.sleep(5)  
 
-    match = re.search(r'"discountedPrice":\s*([\d\.]+)', html)
-    if match:
-        return f"{float(match.group(1)):,.0f} TL"
-    else:
-        return "İndirimli fiyat bulunamadı"
+        screenshot_path = "voyage.png"
+        driver.save_screenshot(screenshot_path)
 
-def send_telegram_message(message):
-    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-    payload = {"chat_id": CHAT_ID, "text": message}
-    requests.post(url, data=payload)
+        send_photo_to_telegram(screenshot_path)
+
+    finally:
+        driver.quit()
 
 if __name__ == "__main__":
-    price = get_price()
-    send_telegram_message(f"Voyage Sorgun Güncel Fiyat (Selenium): {price}")
-    print("✅ Telegram’a gönderildi:", price)
+    main()
 
