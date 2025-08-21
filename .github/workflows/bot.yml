@@ -22,6 +22,6 @@ jobs:
 
       - name: Botu çalıştır
         env:
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          CHAT_ID: ${{ secrets.CHAT_ID }}
+          BOT_TOKEN: ${{ 8064693875:AAFEHpkHFMTnqPno2gZB19FHAbyCMVtmWGQ }}
+          CHAT_ID: ${{ -1002950043362 }}
         run: python voyage_bot.py
