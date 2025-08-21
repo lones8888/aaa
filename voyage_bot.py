@@ -23,11 +23,19 @@ def get_price():
 
     if response.status_code == 200:
         data = response.json()
-        try:
-            price = data["discountedPrice"]
-            return f"{price:,.0f} TL"
-        except KeyError:
-            return "JSON içinde discountedPrice bulunamadı"
+
+        # JSON içinden "Genel Görünüm" olanı seç
+        if isinstance(data, list):  # API liste döndürüyor olabilir
+            for item in data:
+                if item.get("roomName") == "Genel Görünüm":
+                    price = item["roomPrice"]["discountedPrice"]
+                    return f"{price:,.0f} TL"
+        elif isinstance(data, dict):  # Tek obje dönebilir
+            if data.get("roomName") == "Genel Görünüm":
+                price = data["roomPrice"]["discountedPrice"]
+                return f"{price:,.0f} TL"
+
+        return "Genel Görünüm için fiyat bulunamadı"
     else:
         return f"API hatası: {response.status_code}"
 
@@ -38,5 +46,4 @@ def send_telegram_message(message):
 
 if __name__ == "__main__":
     price = get_price()
-    send_telegram_message(f"Voyage Sorgun Güncel Fiyat: {price}")
-
+    send_telegram_message(f"Voyage Sorgun (Genel Görünüm) Güncel Fiyat: {price}")
