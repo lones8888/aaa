@@ -1,5 +1,4 @@
 import requests
-import re
 from bs4 import BeautifulSoup
 import os
 
@@ -11,9 +10,11 @@ URL = "https://www.etstur.com/Voyage-Sorgun?check_in=06.09.2026&check_out=11.09.
 def get_price():
     headers = {"User-Agent": "Mozilla/5.0"}
     response = requests.get(URL, headers=headers)
-    match = re.search(r"(\d{1,3}(?:\.\d{3})*)\s*TL", response.text)
-    if match:
-        return match.group(0)
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    price_tag = soup.find("p", {"data-test-id": "price"})  # data-test-id ile bul
+    if price_tag:
+        return price_tag.get_text(strip=True)
     return "Fiyat bulunamadı"
 
 def send_telegram_message(message):
