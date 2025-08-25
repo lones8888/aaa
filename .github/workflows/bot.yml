@@ -1,24 +1,25 @@
-name: Run Voyage Bot
+name: OKX Liquidity Bot
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: "0 */6 * * *"   # 6 saatte bir çalışır
+    - cron: "0 */4 * * *"   # Her 4 saatte bir çalıştırır
+  workflow_dispatch:        # Manuel olarak da başlatabilirsin
 
 jobs:
   run-bot:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - name: Kod deposunu çek
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Python kur
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Gerekli paketleri yükle
         run: pip install -r requirements.txt
 
-      - name: Run bot
-        run: python voyage.py
+      - name: Botu çalıştır
+        run: python okx_liquidity_bot.py
