@@ -14,13 +14,13 @@ BASE_URL = "https://www.okx.com"
 
 def get_usdt_pairs():
     url = f"{BASE_URL}/api/v5/public/instruments"
-    params = {"instType": "SPOT"}   # spot pariteleri
+    params = {"instType": "SWAP"}   # SWAP pariteleri
     r = requests.get(url, params=params)
     data = r.json()
-    pairs = [x["instId"] for x in data["data"] if x["instId"].endswith("-USDT")]
+    pairs = [x["instId"] for x in data["data"] if x["instId"].endswith("-USDT-SWAP")]
     return pairs
 
-def get_ohlcv(symbol, bar="4H", limit=70):
+def get_ohlcv(symbol, bar="4H", limit=70):   # 70 mum al
     url = f"{BASE_URL}/api/v5/market/candles"
     params = {"instId": symbol, "bar": bar, "limit": limit}
     r = requests.get(url, params=params)
@@ -33,17 +33,18 @@ def get_ohlcv(symbol, bar="4H", limit=70):
 
 def strategy(symbol):
     df = get_ohlcv(symbol)
-    if df is None: return None
+    if df is None: 
+        return None
 
     highs = df["h"].values
     lows = df["l"].values
     closes = df["c"].values
 
-    highest = max(highs[-80:])
-    lowest = min(lows[-80:])
+    highest = max(highs[-70:])   # 70 mum
+    lowest = min(lows[-70:])
 
     sequence = []
-    for i in range(-80, 0):
+    for i in range(-70, 0):
         if lows[i] <= lowest:
             sequence.append(("low", i))
         if highs[i] >= highest:
