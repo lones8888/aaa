@@ -20,7 +20,7 @@ def get_usdt_pairs():
     pairs = [x["instId"] for x in data["data"] if x["instId"].endswith("-USDT")]
     return pairs
 
-def get_ohlcv(symbol, bar="4H", limit=80):
+def get_ohlcv(symbol, bar="4H", limit=70):
     url = f"{BASE_URL}/api/v5/market/candles"
     params = {"instId": symbol, "bar": bar, "limit": limit}
     r = requests.get(url, params=params)
