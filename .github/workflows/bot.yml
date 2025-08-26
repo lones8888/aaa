@@ -2,7 +2,7 @@ name: Run Strategy Bot
 
 on:
   schedule:
-    - cron: "0 3,7,11,15,19,23 * * *"   # 03:00, 07:00, 11:00, 15:00, 19:00, 23:00
+    - cron: "0 0,4,8,12,16,20 * * *"   # UTC saatleri (Türkiye saatine göre otomatik ayarlanacak)
   workflow_dispatch:   # Manuel başlatma
 
 jobs:
@@ -12,6 +12,11 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+
+      - name: Set timezone to Europe/Istanbul
+        uses: zcong1993/setup-timezone@master
+        with:
+          timezone: Europe/Istanbul
 
       - name: Set up Python
         uses: actions/setup-python@v4
