@@ -2,8 +2,8 @@ import requests
 import pandas as pd
 
 # === TELEGRAM ===
-BOT_TOKEN = "8064693875:AAFEHpkHFMTnqPno2gZB19FHAbyCMVtmWGQ"
-CHAT_ID = "-1002950043362"
+BOT_TOKEN = "8295198129:AAGwdBjPNTZbBoVoLYCP8pUxeX7ZrfT7j_8"
+CHAT_ID = "-1001660662034"
 
 def send_telegram(msg):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
