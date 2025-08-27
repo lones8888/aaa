@@ -13,7 +13,7 @@ def send_telegram(msg):
 BASE_URL = "https://www.okx.com"
 
 # Kaç mum üzerinden çalışsın?
-LOOKBACK = 30
+LOOKBACK = 50
 
 def get_usdt_pairs():
     url = f"{BASE_URL}/api/v5/public/instruments"
