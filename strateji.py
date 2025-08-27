@@ -2,8 +2,8 @@ import requests
 import pandas as pd
 
 # === TELEGRAM ===
-BOT_TOKEN = "8064693875:AAFEHpkHFMTnqPno2gZB19FHAbyCMVtmWGQ"
-CHAT_ID = "-1002950043362"
+BOT_TOKEN = "8295198129:AAGwdBjPNTZbBoVoLYCP8pUxeX7ZrfT7j_8"
+CHAT_ID = "-1001660662034"
 
 def send_telegram(msg):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
@@ -14,13 +14,13 @@ BASE_URL = "https://www.okx.com"
 
 def get_usdt_pairs():
     url = f"{BASE_URL}/api/v5/public/instruments"
-    params = {"instType": "SPOT"}   # spot pariteleri
+    params = {"instType": "SWAP"}   # SWAP pariteleri
     r = requests.get(url, params=params)
     data = r.json()
-    pairs = [x["instId"] for x in data["data"] if x["instId"].endswith("-USDT")]
+    pairs = [x["instId"] for x in data["data"] if x["instId"].endswith("-USDT-SWAP")]
     return pairs
 
-def get_ohlcv(symbol, bar="4H", limit=25):
+def get_ohlcv(symbol, bar="4H", limit=25):   # 70 mum al
     url = f"{BASE_URL}/api/v5/market/candles"
     params = {"instId": symbol, "bar": bar, "limit": limit}
     r = requests.get(url, params=params)
@@ -33,13 +33,14 @@ def get_ohlcv(symbol, bar="4H", limit=25):
 
 def strategy(symbol):
     df = get_ohlcv(symbol)
-    if df is None: return None
+    if df is None: 
+        return None
 
     highs = df["h"].values
     lows = df["l"].values
     closes = df["c"].values
 
-    highest = max(highs[-25:])
+    highest = max(highs[-25:])   # 70 mum
     lowest = min(lows[-25:])
 
     sequence = []
