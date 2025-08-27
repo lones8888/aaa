@@ -12,6 +12,9 @@ def send_telegram(msg):
 # === OKX ===
 BASE_URL = "https://www.okx.com"
 
+# Kaç mum üzerinden çalışsın?
+LOOKBACK = 25 
+
 def get_usdt_pairs():
     url = f"{BASE_URL}/api/v5/public/instruments"
     params = {"instType": "SWAP"}   # SWAP pariteleri
@@ -20,15 +23,16 @@ def get_usdt_pairs():
     pairs = [x["instId"] for x in data["data"] if x["instId"].endswith("-USDT-SWAP")]
     return pairs
 
-def get_ohlcv(symbol, bar="4H", limit=24):   # 70 mum al
+def get_ohlcv(symbol, bar="4H", limit=LOOKBACK):   # 24 mum al
     url = f"{BASE_URL}/api/v5/market/candles"
     params = {"instId": symbol, "bar": bar, "limit": limit}
     r = requests.get(url, params=params)
     data = r.json()
-    if "data" not in data: return None
+    if "data" not in data: 
+        return None
     df = pd.DataFrame(data["data"], columns=["ts","o","h","l","c","vol","volCcy","volCcyQuote","confirm"])
     df = df.astype({"o":float,"h":float,"l":float,"c":float})
-    df = df.sort_values("ts")  # zaman sırası
+    df = df.sort_values("ts")  # zaman sırasına göre sırala
     return df
 
 def strategy(symbol):
@@ -40,11 +44,11 @@ def strategy(symbol):
     lows = df["l"].values
     closes = df["c"].values
 
-    highest = max(highs[-24:])   # 70 mum
-    lowest = min(lows[-24:])
+    highest = max(highs[-LOOKBACK:])   # son 24 mumun en yüksek değeri
+    lowest = min(lows[-LOOKBACK:])     # son 24 mumun en düşük değeri
 
     sequence = []
-    for i in range(-24, 0):
+    for i in range(-LOOKBACK, 0):
         if lows[i] <= lowest:
             sequence.append(("low", i))
         if highs[i] >= highest:
