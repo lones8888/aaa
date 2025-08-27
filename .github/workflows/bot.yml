@@ -2,8 +2,8 @@ name: Run Strategy Bot
 
 on:
   schedule:
-    - cron: "0 0,4,8,12,16,20 * * *"   # 03:00, 07:00, 11:00, 15:00, 19:00, 23:00 TR saati
-  workflow_dispatch:
+    - cron: "0 0,4,8,12,16,20 * * *"   # UTC saatleri → Türkiye’de 03:00, 07:00, 11:00, 15:00, 19:00, 23:00
+  workflow_dispatch:   # Manuel tetikleme de kalsın
 
 jobs:
   run:
