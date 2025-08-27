@@ -2,8 +2,8 @@ import requests
 import pandas as pd
 
 # === TELEGRAM ===
-BOT_TOKEN = "8295198129:AAGwdBjPNTZbBoVoLYCP8pUxeX7ZrfT7j_8"
-CHAT_ID = "-1001660662034"
+BOT_TOKEN = "8064693875:AAFEHpkHFMTnqPno2gZB19FHAbyCMVtmWGQ"
+CHAT_ID = "-1002950043362"
 
 def send_telegram(msg):
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
@@ -12,43 +12,38 @@ def send_telegram(msg):
 # === OKX ===
 BASE_URL = "https://www.okx.com"
 
-# Kaç mum üzerinden çalışsın?
-LOOKBACK = 30
-
 def get_usdt_pairs():
     url = f"{BASE_URL}/api/v5/public/instruments"
-    params = {"instType": "SWAP"}   # SWAP pariteleri
+    params = {"instType": "SPOT"}   # spot pariteleri
     r = requests.get(url, params=params)
     data = r.json()
-    pairs = [x["instId"] for x in data["data"] if x["instId"].endswith("-USDT-SWAP")]
+    pairs = [x["instId"] for x in data["data"] if x["instId"].endswith("-USDT")]
     return pairs
 
-def get_ohlcv(symbol, bar="4H", limit=LOOKBACK):   # 24 mum al
+def get_ohlcv(symbol, bar="4H", limit=25):
     url = f"{BASE_URL}/api/v5/market/candles"
     params = {"instId": symbol, "bar": bar, "limit": limit}
     r = requests.get(url, params=params)
     data = r.json()
-    if "data" not in data: 
-        return None
+    if "data" not in data: return None
     df = pd.DataFrame(data["data"], columns=["ts","o","h","l","c","vol","volCcy","volCcyQuote","confirm"])
     df = df.astype({"o":float,"h":float,"l":float,"c":float})
-    df = df.sort_values("ts")  # zaman sırasına göre sırala
+    df = df.sort_values("ts")  # zaman sırası
     return df
 
 def strategy(symbol):
     df = get_ohlcv(symbol)
-    if df is None: 
-        return None
+    if df is None: return None
 
     highs = df["h"].values
     lows = df["l"].values
     closes = df["c"].values
 
-    highest = max(highs[-LOOKBACK:])   # son 24 mumun en yüksek değeri
-    lowest = min(lows[-LOOKBACK:])     # son 24 mumun en düşük değeri
+    highest = max(highs[-25:])
+    lowest = min(lows[-25:])
 
     sequence = []
-    for i in range(-LOOKBACK, 0):
+    for i in range(-25, 0):
         if lows[i] <= lowest:
             sequence.append(("low", i))
         if highs[i] >= highest:
