@@ -20,7 +20,7 @@ def get_usdt_pairs():
     pairs = [x["instId"] for x in data["data"] if x["instId"].endswith("-USDT-SWAP")]
     return pairs
 
-def get_ohlcv(symbol, bar="4H", limit=30):   # 70 mum al
+def get_ohlcv(symbol, bar="4H", limit=120):   # yeterli mum al (80+ güvenlik payı)
     url = f"{BASE_URL}/api/v5/market/candles"
     params = {"instId": symbol, "bar": bar, "limit": limit}
     r = requests.get(url, params=params)
@@ -31,42 +31,66 @@ def get_ohlcv(symbol, bar="4H", limit=30):   # 70 mum al
     df = df.sort_values("ts")  # zaman sırası
     return df
 
+# === STRATEJİ ===
+LOOKBACK_MIN = 10   # burayı sen ayarlıyorsun
+LOOKBACK_MAX = 80   # burayı da
+
 def strategy(symbol):
     df = get_ohlcv(symbol)
     if df is None: 
         return None
 
     highs = df["h"].values
-    lows = df["l"].values
+    lows  = df["l"].values
     closes = df["c"].values
 
-    highest = max(highs[-30:])   # 70 mum
-    lowest = min(lows[-30:])
+    results = []  # tüm sinyalleri topla
+    seen_signals = set()  # aynı entry/sl sinyali tekrar göndermemek için
 
-    sequence = []
-    for i in range(-30, 0):
-        if lows[i] <= lowest:
-            sequence.append(("low", i))
-        if highs[i] >= highest:
-            sequence.append(("high", i))
+    for lookback in range(LOOKBACK_MIN, LOOKBACK_MAX + 1):
+        if len(highs) < lookback:   # yeterli mum yoksa atla
+            continue
 
-    if not sequence:
-        return None
+        highest = max(highs[-lookback:])
+        lowest  = min(lows[-lookback:])
 
-    first_event, idx = sequence[0]
+        sequence = []
+        for i in range(-lookback, 0):
+            if lows[i] <= lowest:
+                sequence.append(("low", i))
+            if highs[i] >= highest:
+                sequence.append(("high", i))
 
-    if first_event == "low":
-        if highs[-1] >= highest:
+        if not sequence:
+            continue
+
+        first_event, idx = sequence[0]
+
+        if first_event == "low" and highs[-1] >= highest:
             entry = highs[idx]
             sl = lows[idx]
             price = closes[-1]
-            return f"🟢 LONG {symbol}\nEntry: {entry}\nSL: {sl}\nPrice: {price}"
-    elif first_event == "high":
-        if lows[-1] <= lowest:
+            signal_key = ("LONG", entry, sl)
+            if signal_key not in seen_signals:
+                seen_signals.add(signal_key)
+                results.append(
+                    f"🟢 LONG {symbol} (Lookback {lookback})\nEntry: {entry}\nSL: {sl}\nPrice: {price}"
+                )
+
+        elif first_event == "high" and lows[-1] <= lowest:
             entry = lows[idx]
             sl = highs[idx]
             price = closes[-1]
-            return f"🔴 SHORT {symbol}\nEntry: {entry}\nSL: {sl}\nPrice: {price}"
+            signal_key = ("SHORT", entry, sl)
+            if signal_key not in seen_signals:
+                seen_signals.add(signal_key)
+                results.append(
+                    f"🔴 SHORT {symbol} (Lookback {lookback})\nEntry: {entry}\nSL: {sl}\nPrice: {price}"
+                )
+
+    if results:
+        return "\n\n".join(results)  # tüm benzersiz sinyalleri gönder
+
     return None
 
 if __name__ == "__main__":
