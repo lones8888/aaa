@@ -1,5 +1,6 @@
 import requests
 import pandas as pd
+import os
 
 # === TELEGRAM ===
 BOT_TOKEN = "8295198129:AAGwdBjPNTZbBoVoLYCP8pUxeX7ZrfT7j_8"
@@ -13,12 +14,24 @@ def send_telegram(msg):
 BASE_URL = "https://www.okx.com"
 
 def get_usdt_pairs():
-    url = f"{BASE_URL}/api/v5/public/instruments"
-    params = {"instType": "SWAP"}   # SWAP pariteleri
-    r = requests.get(url, params=params)
-    data = r.json()
-    pairs = [x["instId"] for x in data["data"] if x["instId"].endswith("-USDT-SWAP")]
-    return pairs
+    # Masaüstündeki coins.txt dosyasını bul
+    desktop = os.path.join(os.path.expanduser("~"), "Desktop")
+    coins_file = os.path.join(desktop, "coins.txt")
+
+    with open(coins_file, "r") as f:
+        coins = [line.strip() for line in f if line.strip()]
+
+    # usdt_swaps_list.txt aynı klasörde bulunuyor varsayımıyla
+    with open("usdt_swaps_list.txt", "r") as f:
+        swaps = [line.strip() for line in f if line.strip().endswith("-USDT-SWAP")]
+
+    selected_pairs = []
+    for coin in coins:
+        symbol = f"{coin}-USDT-SWAP"
+        if symbol in swaps:
+            selected_pairs.append(symbol)
+
+    return selected_pairs
 
 def get_ohlcv(symbol, bar="4H", limit=120):   # yeterli mum al (80+ güvenlik payı)
     url = f"{BASE_URL}/api/v5/market/candles"
@@ -32,8 +45,8 @@ def get_ohlcv(symbol, bar="4H", limit=120):   # yeterli mum al (80+ güvenlik pa
     return df
 
 # === STRATEJİ ===
-LOOKBACK_MIN = 10   # burayı sen ayarlıyorsun
-LOOKBACK_MAX = 80   # burayı da
+LOOKBACK_MIN = 10
+LOOKBACK_MAX = 100
 
 def strategy(symbol):
     df = get_ohlcv(symbol)
@@ -44,11 +57,11 @@ def strategy(symbol):
     lows  = df["l"].values
     closes = df["c"].values
 
-    results = []  # tüm sinyalleri topla
-    seen_signals = set()  # aynı entry/sl sinyali tekrar göndermemek için
+    results = []
+    seen_signals = set()
 
     for lookback in range(LOOKBACK_MIN, LOOKBACK_MAX + 1):
-        if len(highs) < lookback:   # yeterli mum yoksa atla
+        if len(highs) < lookback:
             continue
 
         highest = max(highs[-lookback:])
@@ -89,7 +102,7 @@ def strategy(symbol):
                 )
 
     if results:
-        return "\n\n".join(results)  # tüm benzersiz sinyalleri gönder
+        return "\n\n".join(results)
 
     return None
 
