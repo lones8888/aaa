@@ -35,7 +35,7 @@ def get_ohlcv(symbol, bar="4H", limit=120):
     return df
 
 # === STRATEJİ ===
-LOOKBACK_MIN = 8
+LOOKBACK_MIN = 10
 LOOKBACK_MAX = 25
 
 def strategy(symbol):
@@ -46,7 +46,6 @@ def strategy(symbol):
     highs = df["h"].values
     lows  = df["l"].values
     closes = df["c"].values
-    times  = df["ts"].values  # sinyal zamanı gösterebilmek için
 
     results = []
     seen_signals = set()
@@ -58,41 +57,39 @@ def strategy(symbol):
         highest = max(highs[-lookback:])
         lowest  = min(lows[-lookback:])
 
-        # === LONG setup arama ===
+        sequence = []
         for i in range(-lookback, 0):
-            if lows[i] == lowest:  # sweep (lowest)
-                if i > -lookback:  
-                    prev_high = max(highs[-lookback:i])
-                    # lowest'tan SONRA herhangi bir kapanış prev_high üstüne çıkarsa MSB olur
-                    if any(c > prev_high for c in closes[i:]):
-                        entry = highs[i]
-                        sl = lows[i]
-                        last_price = closes[-1]
-                        t = pd.to_datetime(times[i], unit="ms")
-                        signal_key = ("LONG", entry, sl, lookback, i)
-                        if signal_key not in seen_signals:
-                            seen_signals.add(signal_key)
-                            results.append(
-                                f"🟢 LONG {symbol} (Lookback {lookback})\nTime: {t}\nEntry: {entry}\nSL: {sl}\nLast Price: {last_price}"
-                            )
+            if lows[i] <= lowest:
+                sequence.append(("low", i))
+            if highs[i] >= highest:
+                sequence.append(("high", i))
 
-        # === SHORT setup arama ===
-        for i in range(-lookback, 0):
-            if highs[i] == highest:  # sweep (highest)
-                if i < -1:  
-                    post_low = min(lows[i:])
-                    # highest'tan SONRA herhangi bir kapanış post_low altına inerse MSB olur
-                    if any(c < post_low for c in closes[i:]):
-                        entry = lows[i]
-                        sl = highs[i]
-                        last_price = closes[-1]
-                        t = pd.to_datetime(times[i], unit="ms")
-                        signal_key = ("SHORT", entry, sl, lookback, i)
-                        if signal_key not in seen_signals:
-                            seen_signals.add(signal_key)
-                            results.append(
-                                f"🔴 SHORT {symbol} (Lookback {lookback})\nTime: {t}\nEntry: {entry}\nSL: {sl}\nLast Price: {last_price}"
-                            )
+        if not sequence:
+            continue
+
+        first_event, idx = sequence[0]
+
+        if first_event == "low" and highs[-1] >= highest:
+            entry = highs[idx]
+            sl = lows[idx]
+            price = closes[-1]
+            signal_key = ("LONG", entry, sl)
+            if signal_key not in seen_signals:
+                seen_signals.add(signal_key)
+                results.append(
+                    f"🟢 LONG {symbol} (Lookback {lookback})\nEntry: {entry}\nSL: {sl}\nPrice: {price}"
+                )
+
+        elif first_event == "high" and lows[-1] <= lowest:
+            entry = lows[idx]
+            sl = highs[idx]
+            price = closes[-1]
+            signal_key = ("SHORT", entry, sl)
+            if signal_key not in seen_signals:
+                seen_signals.add(signal_key)
+                results.append(
+                    f"🔴 SHORT {symbol} (Lookback {lookback})\nEntry: {entry}\nSL: {sl}\nPrice: {price}"
+                )
 
     if results:
         return "\n\n".join(results)
