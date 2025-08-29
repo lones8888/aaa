@@ -14,24 +14,15 @@ def send_telegram(msg):
 BASE_URL = "https://www.okx.com"
 
 def get_usdt_pairs():
-    # Önce repo kökünde coins.txt var mı kontrol et
-    if os.path.exists("coins.txt"):
-        coins_file = "coins.txt"
-    else:
-        # yoksa masaüstünden oku (Mac için)
-        desktop = os.path.join(os.path.expanduser("~"), "Desktop")
-        coins_file = os.path.join(desktop, "coins.txt")
+    # Masaüstündeki coins.txt dosyasını bul
+    desktop = os.path.join(os.path.expanduser("~"), "Desktop")
+    coins_file = os.path.join(desktop, "coins.txt")
 
     with open(coins_file, "r") as f:
         coins = [line.strip() for line in f if line.strip()]
 
     # usdt_swaps_list.txt aynı klasörde bulunuyor varsayımıyla
-    if os.path.exists("usdt_swaps_list.txt"):
-        swaps_file = "usdt_swaps_list.txt"
-    else:
-        swaps_file = os.path.join(os.path.expanduser("~"), "Desktop", "usdt_swaps_list.txt")
-
-    with open(swaps_file, "r") as f:
+    with open("usdt_swaps_list.txt", "r") as f:
         swaps = [line.strip() for line in f if line.strip().endswith("-USDT-SWAP")]
 
     selected_pairs = []
@@ -54,7 +45,7 @@ def get_ohlcv(symbol, bar="4H", limit=120):   # yeterli mum al (80+ güvenlik pa
     return df
 
 # === STRATEJİ ===
-LOOKBACK_MIN = 10
+LOOKBACK_MIN = 8
 LOOKBACK_MAX = 100
 
 def strategy(symbol):
