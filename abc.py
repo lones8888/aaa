@@ -13,7 +13,6 @@ def send_telegram(msg):
 BASE_URL = "https://www.okx.com"
 
 def get_usdt_pairs():
-    # Senin coin listen (otomatik -USDT-SWAP eklenecek)
     coins = [
         "POPCAT","ARKM","LDO","PENGU","DOGE","NEAR","APT","BTC","HYPE","ETH",
         "XRP","OP","ARB","LTC","VINE","KAITO","MEME","LINK","MOVE","EIGEN",
@@ -57,34 +56,26 @@ def strategy(symbol):
         highest = max(highs[-lookback:])
         lowest  = min(lows[-lookback:])
 
-        sequence = []
-        for i in range(-lookback, 0):
-            if lows[i] <= lowest:
-                sequence.append(("low", i))
-            if highs[i] >= highest:
-                sequence.append(("high", i))
-
-        if not sequence:
-            continue
-
-        first_event, idx = sequence[0]
-
-        if first_event == "low" and highs[-1] >= highest:
-            entry = highs[idx]
-            sl = lows[idx]
+        # === LONG şartı ===
+        # önce lowest oluşmalı, sonra fiyat highest üstüne çıkmalı
+        if lows[-lookback:].min() == lowest and closes[-1] > highest:
+            entry = highest
+            sl = lowest
             price = closes[-1]
-            signal_key = ("LONG", entry, sl)
+            signal_key = ("LONG", entry, sl, lookback)
             if signal_key not in seen_signals:
                 seen_signals.add(signal_key)
                 results.append(
                     f"🟢 LONG {symbol} (Lookback {lookback})\nEntry: {entry}\nSL: {sl}\nPrice: {price}"
                 )
 
-        elif first_event == "high" and lows[-1] <= lowest:
-            entry = lows[idx]
-            sl = highs[idx]
+        # === SHORT şartı ===
+        # önce highest oluşmalı, sonra fiyat lowest altına inmeli
+        if highs[-lookback:].max() == highest and closes[-1] < lowest:
+            entry = lowest
+            sl = highest
             price = closes[-1]
-            signal_key = ("SHORT", entry, sl)
+            signal_key = ("SHORT", entry, sl, lookback)
             if signal_key not in seen_signals:
                 seen_signals.add(signal_key)
                 results.append(
@@ -93,7 +84,6 @@ def strategy(symbol):
 
     if results:
         return "\n\n".join(results)
-
     return None
 
 if __name__ == "__main__":
