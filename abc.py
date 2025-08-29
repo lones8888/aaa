@@ -56,31 +56,45 @@ def strategy(symbol):
         highest = max(highs[-lookback:])
         lowest  = min(lows[-lookback:])
 
-        # === LONG şartı ===
-        # önce lowest oluşmalı, sonra fiyat highest üstüne çıkmalı
-        if lows[-lookback:].min() == lowest and closes[-1] > highest:
-            entry = highest
-            sl = lowest
-            price = closes[-1]
-            signal_key = ("LONG", entry, sl, lookback)
-            if signal_key not in seen_signals:
-                seen_signals.add(signal_key)
-                results.append(
-                    f"🟢 LONG {symbol} (Lookback {lookback})\nEntry: {entry}\nSL: {sl}\nPrice: {price}"
-                )
+        # === LONG SETUP ===
+        lowest_idx = None
+        for i in range(-lookback, 0):
+            if lows[i] == lowest:
+                lowest_idx = i  # son oluşan lowest bar
+        if lowest_idx is not None:
+            # lowest'tan sonra oluşan en yüksek değeri bul
+            post_lowest_high = max(highs[lowest_idx:])  
+            # son fiyat bu değerin üstüne çıkarsa MSB olur
+            if closes[-1] > post_lowest_high and lowest_idx < len(highs) - 1:
+                entry = highs[lowest_idx]   # sweep mumunun high’ı
+                sl = lows[lowest_idx]       # sweep mumunun low’u
+                price = closes[-1]
+                signal_key = ("LONG", entry, sl, lookback)
+                if signal_key not in seen_signals:
+                    seen_signals.add(signal_key)
+                    results.append(
+                        f"🟢 LONG {symbol} (Lookback {lookback})\nEntry: {entry}\nSL: {sl}\nPrice: {price}"
+                    )
 
-        # === SHORT şartı ===
-        # önce highest oluşmalı, sonra fiyat lowest altına inmeli
-        if highs[-lookback:].max() == highest and closes[-1] < lowest:
-            entry = lowest
-            sl = highest
-            price = closes[-1]
-            signal_key = ("SHORT", entry, sl, lookback)
-            if signal_key not in seen_signals:
-                seen_signals.add(signal_key)
-                results.append(
-                    f"🔴 SHORT {symbol} (Lookback {lookback})\nEntry: {entry}\nSL: {sl}\nPrice: {price}"
-                )
+        # === SHORT SETUP ===
+        highest_idx = None
+        for i in range(-lookback, 0):
+            if highs[i] == highest:
+                highest_idx = i  # son oluşan highest bar
+        if highest_idx is not None:
+            # highest’tan sonra oluşan en düşük değeri bul
+            post_highest_low = min(lows[highest_idx:])  
+            # son fiyat bu değerin altına inerse MSB olur
+            if closes[-1] < post_highest_low and highest_idx < len(lows) - 1:
+                entry = lows[highest_idx]   # sweep mumunun low’u
+                sl = highs[highest_idx]     # sweep mumunun high’ı
+                price = closes[-1]
+                signal_key = ("SHORT", entry, sl, lookback)
+                if signal_key not in seen_signals:
+                    seen_signals.add(signal_key)
+                    results.append(
+                        f"🔴 SHORT {symbol} (Lookback {lookback})\nEntry: {entry}\nSL: {sl}\nPrice: {price}"
+                    )
 
     if results:
         return "\n\n".join(results)
