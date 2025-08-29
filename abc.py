@@ -1,6 +1,5 @@
 import requests
 import pandas as pd
-import os
 
 # === TELEGRAM ===
 BOT_TOKEN = "8295198129:AAGwdBjPNTZbBoVoLYCP8pUxeX7ZrfT7j_8"
@@ -14,34 +13,25 @@ def send_telegram(msg):
 BASE_URL = "https://www.okx.com"
 
 def get_usdt_pairs():
-    # Masaüstündeki coins.txt dosyasını bul
-    desktop = os.path.join(os.path.expanduser("~"), "Desktop")
-    coins_file = os.path.join(desktop, "coins.txt")
+    # Senin coin listen (otomatik -USDT-SWAP eklenecek)
+    coins = [
+        "POPCAT","ARKM","LDO","PENGU","DOGE","NEAR","APT","BTC","HYPE","ETH",
+        "XRP","OP","ARB","LTC","VINE","KAITO","MEME","LINK","MOVE","EIGEN",
+        "BONK","PUMP","INJ","FARTCOIN","FLOKI","PNUT","JUP","NEIRO","MOODENG",
+        "STABLE.C.D","SOL","BNB"
+    ]
+    return [f"{coin}-USDT-SWAP" for coin in coins]
 
-    with open(coins_file, "r") as f:
-        coins = [line.strip() for line in f if line.strip()]
-
-    # usdt_swaps_list.txt aynı klasörde bulunuyor varsayımıyla
-    with open("usdt_swaps_list.txt", "r") as f:
-        swaps = [line.strip() for line in f if line.strip().endswith("-USDT-SWAP")]
-
-    selected_pairs = []
-    for coin in coins:
-        symbol = f"{coin}-USDT-SWAP"
-        if symbol in swaps:
-            selected_pairs.append(symbol)
-
-    return selected_pairs
-
-def get_ohlcv(symbol, bar="4H", limit=120):   # yeterli mum al (80+ güvenlik payı)
+def get_ohlcv(symbol, bar="4H", limit=120):
     url = f"{BASE_URL}/api/v5/market/candles"
     params = {"instId": symbol, "bar": bar, "limit": limit}
     r = requests.get(url, params=params)
     data = r.json()
-    if "data" not in data: return None
+    if "data" not in data: 
+        return None
     df = pd.DataFrame(data["data"], columns=["ts","o","h","l","c","vol","volCcy","volCcyQuote","confirm"])
     df = df.astype({"o":float,"h":float,"l":float,"c":float})
-    df = df.sort_values("ts")  # zaman sırası
+    df = df.sort_values("ts")
     return df
 
 # === STRATEJİ ===
