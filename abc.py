@@ -35,7 +35,7 @@ def get_ohlcv(symbol, bar="4H", limit=120):
     return df
 
 # === STRATEJİ ===
-LOOKBACK_MIN = 10
+LOOKBACK_MIN = 8
 LOOKBACK_MAX = 25
 
 def strategy(symbol):
